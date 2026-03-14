@@ -130,24 +130,32 @@
             <h2 class="text-3xl font-black text-gray-900 mb-2 uppercase">РЕЗУЛЬТАТ</h2>
             <p class="text-gray-500 mb-8 font-medium">Математика — це гімнастика для розуму.</p>
             
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="bg-indigo-50 p-4 rounded-2xl">
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-indigo-50 p-4 rounded-2xl text-center">
                     <p class="text-xs text-indigo-400 font-bold uppercase">Правильно</p>
                     <p id="final-score" class="text-3xl font-black text-indigo-600">0</p>
                 </div>
-                <div class="bg-pink-50 p-4 rounded-2xl">
+                <div class="bg-pink-50 p-4 rounded-2xl text-center">
                     <p class="text-xs text-pink-400 font-bold uppercase">Твій Ранг</p>
                     <p id="final-rank" class="text-sm font-black text-pink-600 mt-2 uppercase">Ранг</p>
                 </div>
             </div>
 
-            <button onclick="location.reload()" class="w-full bg-indigo-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-indigo-100">
-                ЗІГРАТИ ЩЕ РАЗ
-            </button>
+            <div class="space-y-3">
+                <button onclick="shareResult()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-share-nodes"></i> ПОДІЛИТИСЯ РЕЗУЛЬТАТОМ
+                </button>
+                <button onclick="location.reload()" class="w-full bg-gray-100 text-gray-600 font-bold py-4 rounded-2xl hover:bg-gray-200 transition-all">
+                    ЗІГРАТИ ЩЕ РАЗ
+                </button>
+            </div>
+            
+            <p id="share-msg" class="mt-4 text-xs text-green-600 font-bold opacity-0 transition-opacity">Посилання скопійовано!</p>
         </div>
     </div>
 
     <script>
+        const questUrl = "https://learn4life-ua.github.io/math-grand-quest/";
         const questions = [
             {
                 q: "Яке число наступне: 2, 4, 8, 16...?",
@@ -246,15 +254,11 @@
             const data = questions[currentStep];
             document.getElementById('question-text').innerText = data.q;
             document.getElementById('step-count').innerText = `Рівень ${currentStep + 1} з ${questions.length}`;
-            
             document.getElementById('progress-bar').style.width = ((currentStep + 1) / questions.length * 100) + '%';
-            
             document.getElementById('explanation-box').classList.add('hidden');
             document.getElementById('next-btn').classList.add('hidden');
-
             const grid = document.getElementById('options-grid');
             grid.innerHTML = '';
-
             data.options.forEach((opt, idx) => {
                 const btn = document.createElement('button');
                 btn.className = "option-btn w-full bg-white px-6 py-4 rounded-2xl font-bold text-gray-700 text-left";
@@ -267,12 +271,9 @@
         function handleSelect(idx, btn) {
             if (answered) return;
             answered = true;
-
             const correctIdx = questions[currentStep].correct;
             const buttons = document.querySelectorAll('.option-btn');
-            
             buttons.forEach(b => b.disabled = true);
-
             if (idx === correctIdx) {
                 btn.classList.add('correct');
                 score++;
@@ -282,10 +283,8 @@
                 document.getElementById('quiz-screen').classList.add('shake');
                 setTimeout(() => document.getElementById('quiz-screen').classList.remove('shake'), 400);
             }
-
             const expText = document.getElementById('explanation-text');
             expText.innerHTML = questions[currentStep].explain;
-            
             if (window.renderMathInElement) {
                 renderMathInElement(expText, {
                     delimiters: [
@@ -294,7 +293,6 @@
                     ]
                 });
             }
-
             document.getElementById('explanation-box').classList.remove('hidden');
             document.getElementById('next-btn').classList.remove('hidden');
         }
@@ -312,14 +310,37 @@
             document.getElementById('quiz-screen').classList.add('hidden');
             document.getElementById('final-screen').classList.remove('hidden');
             document.getElementById('final-score').innerText = `${score}/${questions.length}`;
-            
             let rank = "Новачок";
             if (score === questions.length) rank = "Архітектор Матриці";
             else if (score >= 10) rank = "Професор Чисел";
             else if (score >= 7) rank = "Ерудит";
             else if (score >= 4) rank = "Школяр";
-            
             document.getElementById('final-rank').innerText = rank;
+        }
+
+        function shareResult() {
+            const rank = document.getElementById('final-rank').innerText;
+            const text = `Я пройшов Math Grand Quest з результатом ${score}/12 і отримав ранг "${rank}"! Спробуй і ти: ${questUrl}`;
+            
+            if (navigator.share) {
+                navigator.share({ title: 'Math Grand Quest', text: text, url: questUrl }).catch(() => copyToClipboard(text));
+            } else {
+                copyToClipboard(text);
+            }
+        }
+
+        function copyToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                const msg = document.getElementById('share-msg');
+                msg.classList.remove('opacity-0');
+                setTimeout(() => msg.classList.add('opacity-0'), 2000);
+            } catch (err) {}
+            document.body.removeChild(textArea);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
